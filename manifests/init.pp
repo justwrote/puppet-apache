@@ -185,6 +185,9 @@
 #   Note: This doesn't necessarily affect the service configuration file
 #   Can be defined also by the (top scope) variable $apache_port
 #
+# [*address*]
+#   The listening address of the service.
+#
 # [*protocol*]
 #   The protocol used by the the service.
 #   This is used by monitor, firewall and puppi (optional) components
@@ -209,6 +212,7 @@ class apache (
   $source_dir          = params_lookup( 'source_dir' ),
   $source_dir_purge    = params_lookup( 'source_dir_purge' ),
   $template            = params_lookup( 'template' ),
+  $ports_template      = params_lookup( 'ports_template' ),
   $service_autorestart = params_lookup( 'service_autorestart' , 'global' ),
   $options             = params_lookup( 'options' ),
   $absent              = params_lookup( 'absent' ),
@@ -243,6 +247,7 @@ class apache (
   $log_dir             = params_lookup( 'log_dir' ),
   $log_file            = params_lookup( 'log_file' ),
   $port                = params_lookup( 'port' ),
+  $address             = params_lookup( 'address' ),
   $protocol            = params_lookup( 'protocol' )
   ) inherits apache::params {
 
@@ -332,6 +337,15 @@ class apache (
     default   => template($apache::template),
   }
 
+  if $apache::port != '80' or $apache::address != '*' or $apache::ports_template != '' {
+    $manage_ports_content = $apache::ports_template ? {
+      ''      => template('apache/ports.conf.erb'),
+      default => template($apache::ports_template),
+    }
+  } else {
+    $manage_ports_content = undef
+  }
+
   ### Managed resources
   package { 'apache':
     ensure => $apache::manage_package,
@@ -358,6 +372,18 @@ class apache (
     source  => $apache::manage_file_source,
     content => $apache::manage_file_content,
     replace => $apache::manage_file_replace,
+    audit   => $apache::manage_audit,
+  }
+
+  file { 'ports.conf':
+    ensure  => $apache::manage_file,
+    path    => $apache::ports_file,
+    mode    => $apache::config_file_mode,
+    owner   => $apache::config_file_owner,
+    group   => $apache::config_file_group,
+    require => Package['apache'],
+    content => $apache::manage_ports_content,
+    notify  => $apache::manage_service_autorestart,
     audit   => $apache::manage_audit,
   }
 

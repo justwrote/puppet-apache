@@ -87,6 +87,7 @@ define apache::vhost (
   $docroot_owner                 = 'root',
   $docroot_group                 = 'root',
   $port                          = '80',
+  $address                       = '*',
   $ssl                           = false,
   $template                      = 'apache/virtualhost/vhost.conf.erb',
   $priority                      = '50',

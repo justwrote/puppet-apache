@@ -88,6 +88,13 @@ class apache::params {
     default                   => '/etc/sysconfig/httpd',
   }
 
+  $ports_file = $::operatingsystem ? {
+    /(?i:Ubuntu|Debian|Mint)/ => '/etc/apache2/ports.conf',
+    /(?i:SLES|OpenSuSE)/      => '/etc/apache2/listen.conf',
+    #freebsd                   => TODO
+    #default                   => TODO
+  }
+
   $pid_file = $::operatingsystem ? {
     /(?i:Debian|Ubuntu|Mint)/ => '/var/run/apache2.pid',
     /(?i:SLES|OpenSuSE)/      => '/var/run/httpd2.pid',
@@ -113,6 +120,7 @@ class apache::params {
   }
 
   $port = '80'
+  $address = '*'
   $protocol = 'tcp'
 
   # General Settings
@@ -121,6 +129,7 @@ class apache::params {
   $source_dir = ''
   $source_dir_purge = false
   $template = ''
+  $ports_template = ''
   $options = ''
   $service_autorestart = true
   $service_requires = Package['apache']
